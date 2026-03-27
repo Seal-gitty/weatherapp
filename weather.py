@@ -78,8 +78,22 @@ def interquartile_range(in_series):
 
     return Q3 - Q1
 
-def filter_series(year_series, month_series, day_series, data_series, max_date=None, min_date=None):
-    pass
+def filter_series(date_series, data_series, min_date=None, max_date=None):
+    filtered = []
+
+    for date, value in zip(date_series, data_series):
+        if value is None:
+            continue
+
+        if min_date and date < min_date:
+            continue
+
+        if max_date and date > max_date:
+            continue
+
+        filtered.append(value)
+
+    return filtered
 
 def series_range(in_series):    
     data = [x for x in in_series if x is not None]
@@ -92,14 +106,44 @@ def series_range(in_series):
 
     return maximum - minimum
 
-def read_csv(file,default_value=None):
+def read_csv(file, default_value=None):
     data_table = {}
     with open(file) as f:
         lines = f.readlines()
+
     lines = [line.strip().split(',') for line in lines]
+
     for i in range(len(lines[0])):
-        data_table[lines[0][i]] = [default_value if (len(line[i]) == 0) else float(line[i]) for line in lines[1:]]
+        column_name = lines[0][i]
+
+        column_data = []
+        for line in lines[1:]:
+            value = line[i]
+
+            if value == "":
+                column_data.append(default_value)
+            else:
+                try:
+                    column_data.append(float(value))
+                except ValueError:
+                    column_data.append(value)  # keep as string (e.g. dates)
+
+        data_table[column_name] = column_data
+
     return data_table
+
+def get_date_range():
+    print("\nEnter date range (YYYY-MM-DD) or press Enter to skip:")
+
+    min_date = input("Start date: ")
+    max_date = input("End date: ")
+
+    if min_date == "":
+        min_date = None
+    if max_date == "":
+        max_date = None
+
+    return min_date, max_date
 
 def get_user_choice(options):
     for i, option in enumerate(options):
@@ -118,6 +162,14 @@ def menu(data_table):
     choice = get_user_choice(series_titles)
 
     series = data_table[choice]
+    dates = data_table["Date"]
+
+    # 👇 NEW: get date range
+    min_date, max_date = get_date_range()
+
+    # 👇 NEW: filter data
+    if min_date or max_date:
+        series = filter_series(dates, series, min_date, max_date)
 
     print("\nSelect a calculation:")
     calc_choice = get_user_choice(calculation_options)
@@ -144,6 +196,6 @@ def menu(data_table):
     print(f"{calc_choice}: {result}")
     
 if __name__ == "__main__":
-    data = read_csv('weather.csv')
+    data = read_csv('weather_tidier.csv')
     menu(data)
     
