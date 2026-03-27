@@ -2,7 +2,6 @@
 series_titles = ["Maximum temperature (Degree C)", "Minimum temperature (Degree C)", "Rainfall amount (millimetres)"]
 
 def mean(in_series):
-   pass
     total = 0
     count = 0
 
@@ -21,6 +20,43 @@ def variance(in_series):
 
 def standard_deviation(in_series):
    return variance(in_series) ** 0.5
+
+def interquartile_range(in_series):
+    # Remove None values
+    data = [x for x in in_series if x is not None]
+
+    if len(data) == 0:
+        return None
+
+    # Sort the data
+    data.sort()
+
+    # Median helper
+    def median(values):
+        n = len(values)
+        mid = n // 2
+
+        if n % 2 == 0:
+            return (values[mid - 1] + values[mid]) / 2
+        else:
+            return values[mid]
+
+    n = len(data)
+    mid = n // 2
+
+    # Split into halves
+    if n % 2 == 0:
+        lower_half = data[:mid]
+        upper_half = data[mid:]
+    else:
+        lower_half = data[:mid]
+        upper_half = data[mid + 1:]
+
+    # Quartiles
+    Q1 = median(lower_half)
+    Q3 = median(upper_half)
+
+    return Q3 - Q1
 
 def filter_series(year_series, month_series, day_series, data_series, max_date=None, min_date=None):
     pass
@@ -51,6 +87,7 @@ def menu(data_table):
     choice = get_user_choice(series_titles)
     series = data_table[choice]
     print(f"Mean: {mean(data_table[choice])}")
+    print(f"IQR: {interquartile_range(series)}")
 
 if __name__ == "__main__":
     data = read_csv('weather.csv')
